@@ -1,42 +1,18 @@
 import os
-from flask import Flask, request, jsonify
-from dotenv import load_dotenv
-
-# LangChain / LLM Imports
-from langchain.agents import initialize_agent
-from langchain_groq import ChatGroq
-
-# Your tool imports
-from tools.sum_numbers import sum_numbers
-from tools.multiply_numbers import multiply_numbers
-from tools.convert_to_bw import convert_to_bw
+import uuid
+from flask import Flask, request, jsonify, session
+from agent.agent import create_agent_for_user
 
 # Cloudinary utilities
 from utils.utils import configure_cloudinary, upload_image_to_cloudinary
-
-# 1. Load environment variables
-load_dotenv()
-
-# 2. Configure Cloudinary
+# Supabase utilities
+from utils.supabase_utils import store_chat_message, get_chat_history
+#Configure Cloudinary
 configure_cloudinary()
 
-# 3. Retrieve the Groq API key from .env
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-# 4. Bind your tools to the agent
-tools = [sum_numbers, multiply_numbers, convert_to_bw]
-
-# 5. Initialize the LLM
-llm = ChatGroq(
-    api_key=GROQ_API_KEY,
-    model_name="llama-3.3-70b-versatile",
-    temperature=0,
-)
-
-agent = initialize_agent(tools, llm, agent="zero-shot-react-description", verbose=True)
-
-# 6. Create the Flask app
+# Create the Flask app
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # For session management
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -44,10 +20,18 @@ def chat():
     Expects multipart/form-data with:
       - "message": text input (required)
       - "image": optional file (e.g., .jpg or .png)
+      - "user_id": optional user identifier (if not provided, will use session ID)
     """
     # Read form data (for multipart/form-data)
     message = request.form.get("message")
     image_file = request.files.get("image")
+    user_id = request.form.get("user_id")
+    
+    # If no user_id is provided, use session ID
+    if not user_id:
+        if 'user_id' not in session:
+            session['user_id'] = str(uuid.uuid4())
+        user_id = session['user_id']
 
     if not message:
         return jsonify({"error": "Missing 'message' parameter"}), 400
@@ -64,13 +48,49 @@ def chat():
     if cloud_url:
         message += f"\nHere is the image URL: {cloud_url}"
 
-    # Pass the message (plus optional image reference) to the agent
+    # Get chat history for this user from Supabase
+    history = get_chat_history(user_id)
+    
+    # Create a new agent instance for this user with their chat history
+    user_agent = create_agent_for_user(history)
+    
+    # Pass the message to the agent
     try:
-        result = agent.run(message)
+        # The agent has the system message and the user's conversation history
+        result = user_agent.run(input=message)
+        
+        # Store the message and response in Supabase
+        store_chat_message(user_id, message, result, cloud_url)
+        
+        return jsonify({
+            "response": result,
+            "user_id": user_id
+        })
     except Exception as e:
+        print(f"Error processing message: {e}")
         return jsonify({"error": str(e)}), 500
 
-    return jsonify({"response": result})
+@app.route('/history', methods=['GET'])
+def get_history():
+    """
+    Get chat history for a user.
+    
+    Query parameters:
+      - user_id: The user identifier (required)
+      - limit: Maximum number of messages to retrieve (optional, default=10)
+    """
+    user_id = request.args.get("user_id")
+    limit = request.args.get("limit", default=10, type=int)
+    
+    if not user_id:
+        return jsonify({"error": "Missing 'user_id' parameter"}), 400
+    
+    history = get_chat_history(user_id, limit)
+    
+    return jsonify({
+        "history": history,
+        "user_id": user_id
+    })
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
