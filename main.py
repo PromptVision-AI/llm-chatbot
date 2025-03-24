@@ -1,10 +1,10 @@
 import os
 import uuid
 from flask import Flask, request, jsonify, session
-from agent.agent import create_agent_for_user
+from agent.agent import create_agent_for_user, format_message_with_history
 
 # Cloudinary utilities
-from utils.utils import configure_cloudinary, upload_image_to_cloudinary
+from utils.utils import configure_cloudinary, json_parser, upload_image_to_cloudinary
 # Supabase utilities
 from utils.supabase_utils import store_chat_message, get_chat_history
 #Configure Cloudinary
@@ -44,26 +44,28 @@ def chat():
         except Exception as e:
             return jsonify({"error": f"Failed to upload image: {e}"}), 500
 
-    # Optionally include the image URL in the user prompt
-    if cloud_url:
-        message += f"\nHere is the image URL: {cloud_url}"
-
     # Get chat history for this user from Supabase
     history = get_chat_history(user_id)
     
-    # Create a new agent instance for this user with their chat history
-    user_agent = create_agent_for_user(history)
+    # Format the message with system prompt and history
+    formatted_message = message
+    if cloud_url:
+        formatted_message += f"\nHere is the image URL: {cloud_url}"
+        message += f"\nHere is the image URL: {cloud_url}"
+    formatted_message = format_message_with_history(formatted_message, history)
     
-    # Pass the message to the agent
+    # Create a new agent instance for this user
+    user_agent = create_agent_for_user()
+    
+    # Pass the formatted message to the agent
     try:
-        # The agent has the system message and the user's conversation history
-        result = user_agent.run(input=message)
+        result = user_agent.invoke(input=formatted_message)
         
         # Store the message and response in Supabase
-        store_chat_message(user_id, message, result, cloud_url)
+        store_chat_message(user_id, message, result['output'], cloud_url)
         
         return jsonify({
-            "response": result,
+            "response": json_parser(result['output']),
             "user_id": user_id
         })
     except Exception as e:
