@@ -21,6 +21,7 @@ IMPORTANT: You MUST ALWAYS respond in JSON format. Your response must be a valid
     "mask_url": "URL if applicable",
     "bounding_boxes": [], // if applicable
     "centroids": [] // if applicable
+    "annotated_image_url": "URL if applicable"
 }
 
 The "text_response" field is REQUIRED and must always be present. Other fields should only be included when they are relevant to your response.
@@ -55,7 +56,8 @@ Examples of valid responses:
     "text_response": "I've detected 3 people in your image.",
     "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v1234567/original.jpg",
     "bounding_boxes": [[100, 150, 200, 300], [300, 200, 400, 350], [500, 250, 600, 400]],
-    "centroids": [[150, 225], [350, 275], [550, 325]]
+    "centroids": [[150, 225], [350, 275], [550, 325]],
+    "annotated_image_url": "https://res.cloudinary.com/your-cloud/image/upload/v1234567/annotated_image.jpg",
 }
 
 Remember:

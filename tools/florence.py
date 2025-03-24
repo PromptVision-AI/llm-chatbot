@@ -88,6 +88,7 @@ def detect_objects_tool(input: str) -> str:
           - "bounding_boxes": list, list of bounding boxes [x1, y1, x2, y2],
           - "centroids": list, list of centroids [cx, cy] for each box,
           - "labels": list, list of labels for each detected object.
+          - "annotated_image_url": str, the url of the annotated image.
     """
     # Parse the input JSON and extract the required fields
     try:
