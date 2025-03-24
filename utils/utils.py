@@ -9,7 +9,6 @@ from langchain.output_parsers.json import parse_json_markdown
 load_dotenv()
 
 # Retrieve the variables
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 CLOUDINARY_NAME = os.getenv("CLOUDINARY_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")

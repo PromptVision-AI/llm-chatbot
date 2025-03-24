@@ -4,6 +4,7 @@ import os
 from tools.sum_numbers import sum_numbers
 from tools.multiply_numbers import multiply_numbers
 from tools.convert_to_bw import convert_to_bw
+from tools.florence import segment_image_tool,detect_objects_tool
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 #Retrieve the llm name from .env
 LLM_NAME = os.getenv("LLM_NAME")
 #Bind your tools to the agent
-tools = [sum_numbers, multiply_numbers, convert_to_bw]
+tools = [sum_numbers, multiply_numbers, convert_to_bw, segment_image_tool,detect_objects_tool]
 
 #Initialize the LLM 
 llm = ChatGroq(
