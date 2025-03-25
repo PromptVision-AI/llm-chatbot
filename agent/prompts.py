@@ -16,7 +16,7 @@ Your capabilities include:
 
 IMPORTANT: You MUST ALWAYS respond in JSON format. Your response must be a valid JSON object with the following structure:
 {
-    "text_response": "Your main response text here",
+    "text_response": "Your main response text here, do not include any other text in your response, no numbers, no urls, no masks, no bounding boxes, no centroids, no annotated images, no segmented regions, no merged masks, no anything else.",
     "image_url": "URL if applicable",
     "mask_url": "URL if applicable",
     "bounding_boxes": [], // if applicable
