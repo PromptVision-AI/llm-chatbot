@@ -9,18 +9,40 @@ A Flask-based chatbot application that uses Groq's LLM API for generating respon
 - Per-user agent instances to prevent context mixing
 - Conversation memory for maintaining context
 - Mathematical operations (sum and multiply numbers)
-- Image processing (convert to black and white)
+- Image processing capabilities:
+  - Convert images to black and white
+  - Object detection using Grounding DINO
+  - Image segmentation using SAM (Segment Anything Model)
 - Image upload via Cloudinary
 - Chat history storage and retrieval via Supabase
 
 ## Setup
 
-1. Clone the repository
-2. Install dependencies:
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd llm-chatbot
    ```
+
+2. Install dependencies:
+   ```bash
    pip install -r requirements.txt
    ```
-3. Create a `.env` file with the following variables:
+
+3. Download required model weights:
+   - Grounding DINO:
+     ```bash
+     mkdir -p grounding_dino_base
+     # Download the model from: https://huggingface.co/IDEA-Research/grounding-dino-base
+     # Place the model files in the grounding_dino_base directory
+     ```
+   - SAM (Segment Anything Model):
+     ```bash
+     # Download SAM weights from: https://github.com/facebookresearch/segment-anything
+     # Place sam2.1_l.pt in the project root directory
+     ```
+
+4. Create a `.env` file with the following variables:
    ```
    GROQ_API_KEY=your_groq_api_key
    CLOUDINARY_NAME=your_cloudinary_cloud_name
@@ -30,18 +52,36 @@ A Flask-based chatbot application that uses Groq's LLM API for generating respon
    SUPABASE_KEY=your_supabase_anon_key
    ```
 
-4. Set up Supabase:
+5. Set up Supabase:
    - Create a new project in Supabase
-   - Create a table called `chat_history` with the following columns:
-     - `id` (uuid, primary key)
-     - `user_id` (text)
-     - `timestamp` (timestamp with timezone)
-     - `message` (text)
-     - `response` (text)
-     - `image_url` (text, nullable)
+   - Run the following SQL in the Supabase SQL editor to create the required table:
+     ```sql
+     CREATE TABLE chat_history (
+         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+         user_id TEXT NOT NULL,
+         timestamp TIMESTAMPTZ NOT NULL,
+         message TEXT NOT NULL,
+         response TEXT NOT NULL,
+         image_url TEXT,
+         created_at TIMESTAMPTZ DEFAULT NOW()
+     );
 
-5. Run the application:
-   ```
+     CREATE INDEX idx_chat_history_user_id ON chat_history(user_id);
+     CREATE INDEX idx_chat_history_timestamp ON chat_history(timestamp);
+
+     ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
+
+     CREATE POLICY "Users can view their own chat history"
+         ON chat_history FOR SELECT
+         USING (auth.uid()::text = user_id);
+
+     CREATE POLICY "Users can insert their own messages"
+         ON chat_history FOR INSERT
+         WITH CHECK (auth.uid()::text = user_id);
+     ```
+
+6. Run the application:
+   ```bash
    python main.py
    ```
 
@@ -93,9 +133,29 @@ Response:
 }
 ```
 
+## Model Weights
+
+The following model weights are required but not included in the repository due to size limitations:
+
+1. Grounding DINO Base Model:
+   - Download from: https://huggingface.co/IDEA-Research/grounding-dino-base
+   - Place in: `grounding_dino_base/` directory
+   - Required files:
+     - config.json
+     - pytorch_model.bin
+     - preprocessor_config.json
+     - special_tokens_map.json
+     - tokenizer_config.json
+     - tokenizer.json
+     - vocab.txt
+
+2. SAM (Segment Anything Model):
+   - Download from: https://github.com/facebookresearch/segment-anything
+   - Place `sam2.1_l.pt` in the project root directory
+
 ## Customizing the System Prompt
 
-You can modify the system prompt in `utils/prompts.py` to change how the LLM behaves. The system prompt is passed to the agent as a `SystemMessage` when it's initialized, ensuring that it properly guides the model's behavior throughout the conversation.
+You can modify the system prompt in `agent/prompts.py` to change how the LLM behaves. The system prompt is passed to the agent as a `SystemMessage` when it's initialized, ensuring that it properly guides the model's behavior throughout the conversation.
 
 ## Conversation Memory
 
