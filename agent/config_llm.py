@@ -4,7 +4,7 @@ import os
 from tools.sum_numbers import sum_numbers
 from tools.multiply_numbers import multiply_numbers
 from tools.convert_to_bw import convert_to_bw
-from tools.florence import detect_objects_tool
+from tools.grounding_dino.grounding_dino_tool import detect_objects_tool
 from tools.general_qa import general_qa_tool
 from tools.sam.sam_segmentation import sam_segment_tool
 from langchain_groq import ChatGroq
