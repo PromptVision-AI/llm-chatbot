@@ -106,32 +106,7 @@ Response:
 }
 ```
 
-### History Endpoint
 
-```
-GET /history?user_id=<user_id>&limit=<limit>
-```
-
-Parameters:
-- `user_id` (required): User identifier
-- `limit` (optional, default=10): Maximum number of messages to retrieve
-
-Response:
-```json
-{
-  "history": [
-    {
-      "id": "uuid",
-      "user_id": "user_identifier",
-      "timestamp": "2023-01-01T12:00:00Z",
-      "message": "User message",
-      "response": "LLM response",
-      "image_url": "https://cloudinary.com/image.jpg"
-    }
-  ],
-  "user_id": "user_identifier"
-}
-```
 
 ## Model Weights
 
