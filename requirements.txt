@@ -14,3 +14,4 @@ transformers>=4.30.0  # For Grounding DINO
 matplotlib>=3.7.0
 numpy>=1.24.0
 requests>=2.31.0
+pytesseract>=0.3.10  # For OCR

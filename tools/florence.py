@@ -70,6 +70,64 @@ def segment_image_tool(input: str) -> str:
     
     return json.dumps(result)
 
+@tool
+def caption_image_tool(input: str) -> str:
+    """
+    It provides a very detailed image caption by calling the /caption API endpoint.
+    
+    The input should be a JSON-formatted string with:
+      - "image_url": str, the URL of the image to segment
+      
+    Returns:
+      str: A JSON-formatted string with the captioning results containing:
+          - "success": bool,
+          - "caption": str
+    """
+    # Parse the input JSON and extract the required fields
+    try:
+        data = json_parser(input)
+        image_url = data.get("image_url")
+        if not image_url:
+            raise ValueError("Missing 'image_url' in input.")
+    except Exception as e:
+        raise ValueError(f"Invalid input. Expected JSON with keys 'image_url'. Error: {e}")
+    
+    # Download the image from the provided URL
+    try:
+        image_data = urlopen(image_url).read()
+    except Exception as e:
+        raise ValueError(f"Could not download image from {image_url}: {e}")
+    
+    # Open the image using Pillow to determine its format (e.g., PNG, JPEG)
+    try:
+        image = Image.open(io.BytesIO(image_data))
+        image_format = image.format if image.format else "PNG"
+    except Exception as e:
+        raise ValueError(f"Could not open image data: {e}")
+    
+    # Build a filename and set content type based on the image format
+    ext = image_format.lower()
+    filename = f"temp_image.{ext}"
+    
+    # Define the API endpoint URL (adjust if your endpoint is hosted elsewhere)
+    api_url = "http://localhost:8000/caption"
+    
+    # Prepare files and form data for the POST request
+    files = {"file": (filename, image_data, f"image/{ext}")}
+    
+    try:
+        response = requests.post(api_url, files=files)
+        response.raise_for_status()
+    except Exception as e:
+        raise ValueError(f"Failed to call segmentation API: {e}")
+    
+    # Parse and return the JSON response as a string
+    try:
+        result = response.json()
+    except Exception as e:
+        raise ValueError(f"API did not return valid JSON: {e}")
+    
+    return json.dumps(result)
 
 @tool
 def detect_objects_tool(input: str) -> str:

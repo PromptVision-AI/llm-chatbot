@@ -57,6 +57,7 @@ def detect_objects_tool(input: str) -> str:
     # Open the image using Pillow
     try:
         image = Image.open(io.BytesIO(image_data))
+        image = image.convert("RGB")
     except Exception as e:
         raise ValueError(f"Could not open image data: {e}")
     
