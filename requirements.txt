@@ -1,17 +1,13 @@
-flask==2.3.3
-python-dotenv==1.0.0
-langchain>=0.1.0
-langchain-groq>=0.1.0
-langchain-community>=0.0.13
+python-dotenv==1.0.1
+Flask==3.1.0
+langchain==0.3.20
+langchain-groq==0.2.4
 supabase==2.13.0
-cloudinary==1.36.0
-Pillow==10.0.0
-uuid==1.30
-ultralytics>=8.0.0  # For SAM
-torch>=2.0.0
-torchvision>=0.15.0
-transformers>=4.30.0  # For Grounding DINO
-matplotlib>=3.7.0
-numpy>=1.24.0
-requests>=2.31.0
-pytesseract>=0.3.10  # For OCR
+cloudinary==1.42.2
+pillow==11.1.0
+ultralytics==8.3.96
+transformers==4.50.3
+matplotlib==3.9.4
+numpy==2.0.2
+requests==2.32.3
+pytesseract==0.3.13

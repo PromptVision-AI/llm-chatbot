@@ -85,7 +85,7 @@ def sam_segment_tool(input: str) -> str:
     
     The input should be a JSON-formatted string with:
       - "image_url": str, the Cloudinary URL of the image to segment.
-      - "bounding_boxes": list, list of bounding boxes in format [x1, y1, x2, y2].
+      - "bounding_boxes": list, list of bounding boxes in format [x1, y1, x2, y2] this must be obtained using detect_objects_tool
       
     Returns:
       str: A JSON-formatted string with segmentation results containing:
