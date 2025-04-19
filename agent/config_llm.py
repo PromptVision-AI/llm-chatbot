@@ -20,7 +20,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 #Retrieve the llm name from .env
 LLM_NAME = os.getenv("LLM_NAME")
 #Bind your tools to the agent
-tools = [sum_numbers, multiply_numbers, convert_to_bw, detect_objects_tool, general_qa_tool, sam_segment_tool, caption_image_tool, ocr_image]
+tools = [convert_to_bw, detect_objects_tool, general_qa_tool, sam_segment_tool, caption_image_tool, ocr_image]
 
 #Initialize the LLM 
 llm = ChatGroq(
