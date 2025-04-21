@@ -27,7 +27,7 @@ from utils.utils import json_parser, upload_image_to_cloudinary
 BASE_MODEL_SAVE_DIRECTORY = "tools/diffusion/saved_pipeline" # Or "path/to/your/stable-diffusion-v1-5"
 CONTROLNET_MODEL_ID = "lllyasviel/control_v11p_sd15_inpaint"
 # Default generation parameters (used by the img2img pipeline)
-DEFAULT_STRENGTH = 0.6  # Controls how much the init_image is changed
+DEFAULT_STRENGTH = 0.3  # Controls how much the init_image is changed
 DEFAULT_CFG_SCALE = 7.5 # Controls prompt adherence
 DEFAULT_NUM_STEPS = 50  # Number of diffusion steps
 
