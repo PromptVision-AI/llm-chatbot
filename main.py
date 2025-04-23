@@ -6,7 +6,7 @@ from agent.agent import create_agent_for_user, format_message_with_history
 # Cloudinary utilities
 from utils.utils import configure_cloudinary, format_endpoint_response
 # Supabase utilities
-from utils.supabase_utils import store_chat_message, get_chat_history
+from utils.supabase_utils import get_conversation_history, store_chat_message, get_chat_history
 #Configure Cloudinary
 configure_cloudinary()
 
@@ -45,7 +45,7 @@ def chat():
         return jsonify({"error": "Missing 'conversation_id' parameter"}), 400
 
     # Get chat history for this user from Supabase
-    history = get_chat_history(user_id) ## UPDATE WITH get_conversation_history
+    history = get_conversation_history(conversation_id) ## UPDATE WITH get_conversation_history
     
     # Format the message with system prompt and history
     formatted_message = prompt
@@ -62,7 +62,7 @@ def chat():
         result = user_agent.invoke(input=formatted_message)
         
         # Store the message and response in Supabase
-        store_chat_message(user_id, prompt, result['output'], input_image_url) ## UPDATE WITH DELETE
+        # store_chat_message(user_id, prompt, result['output'], input_image_url) ## UPDATE WITH DELETE
         result_data = format_endpoint_response(result, user_id, prompt_id)
         return jsonify(result_data)
     except Exception as e:
@@ -73,6 +73,5 @@ def chat():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
-
 
 

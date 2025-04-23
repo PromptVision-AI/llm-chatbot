@@ -50,7 +50,7 @@ def create_agent_for_user(user_history=None):
         verbose=True,
         handle_parsing_errors=True,
         return_intermediate_steps=True,
-        max_iterations=15  # Limit the number of iterations to prevent infinite loops
+        max_iterations=10  # Limit the number of iterations to prevent infinite loops
     )
     
     return agent

@@ -104,22 +104,18 @@ def save_and_upload_image(image: Image.Image, step_name="image"):
 @tool
 def diffusion_inpainting_tool(input: str) -> str:
     """
-    Performs high-quality SDXL inpainting using a Base + Refiner workflow.
-    Loads models from local directories ('./LatentDiffusion/sdxl_inpaint_base_local' and
-    './LatentDiffusion/sdxl_refiner_local'). Takes an initial image, a mask specifying the
-    area to change, and a text prompt. Resizes images if dimensions are not multiples of 8.
-    Uploads the final refined image to Cloudinary.
+   Takes an initial image, a mask specifying the area to change, and a text prompt.
 
     The input should be a JSON-formatted string with:
-      - "image_url": str, URL of the initial image.
-      - "mask_url": str, URL of the mask image (white areas indicate where to inpaint).
-      - "prompt": str, text description of what to generate in the masked area.
+      - "image_url": str, URL of the initial image
+      - "mask_url": str, URL of the mask image, it must be obtained from the segmentation tool
+      - "prompt": str, text description of what to generate
 
     Returns:
       str: A JSON-formatted string containing:
         - "success": bool, True if completed successfully, False otherwise.
-        - "final_image_url": str, Cloudinary URL of the final generated image (if successful).
-        - "error": str, (Optional) Error message if success is False.
+        - "inpainted_image_url": str, Cloudinary URL of the final generated image
+        - "original_image_url": str, Cloudinary URL of the original image
     """
     # Explicitly trigger garbage collection and cache clearing
     if torch.cuda.is_available():
