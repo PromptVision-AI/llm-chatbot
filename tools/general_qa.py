@@ -1,5 +1,6 @@
 from langchain_core.tools import tool  
 from utils.utils import json_parser
+import json
 
 @tool
 def general_qa_tool(input: str) -> int:
@@ -14,4 +15,4 @@ def general_qa_tool(input: str) -> int:
       The user query
     """
     
-    return input
+    return json.dumps({"response": f"Reflect about the following and provide a response: {input}"})

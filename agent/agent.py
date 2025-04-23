@@ -24,7 +24,7 @@ def format_message_with_history(message, user_history=None):
         formatted_message += "History of the conversation:\n\n"
         # Get last 6 interactions
         for entry in user_history[-6:]:
-            formatted_message += f"User: {entry['message']}\n"
+            formatted_message += f"User: {entry['message']}\n" ## UPDATE WITH text
             formatted_message += f"Assistant: {entry['response']}\n\n"
     
     formatted_message += f"Current user message:\n\n{message}"
@@ -49,6 +49,7 @@ def create_agent_for_user(user_history=None):
         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,  # Changed from ZERO_SHOT_REACT_DESCRIPTION
         verbose=True,
         handle_parsing_errors=True,
+        return_intermediate_steps=True,
         max_iterations=15  # Limit the number of iterations to prevent infinite loops
     )
     

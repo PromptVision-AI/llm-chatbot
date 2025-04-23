@@ -68,3 +68,29 @@ def get_chat_history(user_id, limit=10):
     except Exception as e:
         print(f"Error retrieving chat history: {e}")
         return [] 
+    
+def get_conversation_history(conversation_id, limit=10):
+    """
+    Retrieve conversation history for a specific user.
+    
+    Args:
+        conversation_id (str): Identifier for the conversation
+        limit (int, optional): Maximum number of messages to retrieve
+        
+    Returns:
+        list: List of chat history records
+    """
+    try:
+        result = supabase.table("prompts") \
+                .select("*") \
+                .eq("conversation_id", conversation_id) \
+                .order("created_at", desc=True) \
+                .limit(limit) \
+                .execute()
+                
+        # Return the messages in chronological order (oldest first)
+        return list(reversed(result.data)) if result.data else []
+    
+    except Exception as e:
+        print(f"Error retrieving chat history: {e}")
+        return [] 
