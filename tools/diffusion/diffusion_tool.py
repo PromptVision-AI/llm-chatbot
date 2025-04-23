@@ -306,7 +306,7 @@ def diffusion_inpainting_tool(input: str) -> str:
             "inpainted_image_url": final_image_url,
             "original_image_url": image_url,
         }
-        return json.dumps(response, indent=2)
+        return json.dumps(response)
 
     # --- Error Handling ---
     # ... (error handling remains the same) ...
