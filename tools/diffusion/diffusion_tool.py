@@ -303,7 +303,8 @@ def diffusion_inpainting_tool(input: str) -> str:
         print("\nProcess completed successfully.")
         response = {
             "success": True,
-            "final_image_url": final_image_url
+            "inpainted_image_url": final_image_url,
+            "original_image_url": image_url,
         }
         return json.dumps(response, indent=2)
 

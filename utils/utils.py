@@ -71,7 +71,8 @@ STEP_TYPE_MAP = {
     "general_qa_tool": ("general_Q&A", "QA"),
     "sam_segment_tool": ("segmentation", "segmentation"),
     "caption_image_tool": ("image_captioning", "captioning"),
-    "ocr_image": ("OCR", "OCR")
+    "ocr_image": ("OCR", "OCR"),
+    "diffusion_inpainting_tool": ("image_inpainting", "inpainting"),
 }
 
 def get_info_from_step(step_name, step_response, prompt_id, suffix):
@@ -79,7 +80,7 @@ def get_info_from_step(step_name, step_response, prompt_id, suffix):
     image_format = ''
     filename = ''
     step_contains_image = False
-    if 'annotated_image_url' in step_response or 'mask_url' in step_response or 'bw_image_url' in step_response or 'merged_mask_url' in step_response: 
+    if 'inpainted_image_url' in step_response or 'annotated_image_url' in step_response or 'mask_url' in step_response or 'bw_image_url' in step_response or 'merged_mask_url' in step_response: 
         step_contains_image = True
 
 
@@ -93,6 +94,8 @@ def get_info_from_step(step_name, step_response, prompt_id, suffix):
             url = step_response.get('bw_image_url')
         elif 'mask_url' in step_response:
             url = step_response.get('mask_url')
+        elif 'inpainted_image_url' in step_response:
+            url = step_response.get('inpainted_image_url')
 
         image_format = url.split('.')[-1]
         filename =  f"{prompt_id}_{suffix}.{image_format}"
@@ -124,8 +127,10 @@ def format_endpoint_response(response, user_id, prompt_id):
     for i, step in enumerate(response['intermediate_steps']):
         if(step[0].tool == 'None'):
             continue
-        step_response = json_parser(step[1])
         step_type = STEP_TYPE_MAP.get(step[0].tool)
+        if(step_type is None):
+            continue
+        step_response = json_parser(step[1])
         suffix = step_type[1]
         step_name = step_type[0]
 
