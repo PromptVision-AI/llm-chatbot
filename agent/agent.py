@@ -24,7 +24,7 @@ def format_message_with_history(message, user_history=None):
         formatted_message += "History of the conversation:\n\n"
         # Get last 6 interactions
         for entry in user_history[-6:]:
-            formatted_message += f"User: {entry['message']}\n" ## UPDATE WITH text
+            formatted_message += f"User: {entry['text']}\n" ## UPDATE WITH text
             formatted_message += f"Assistant: {entry['response']}\n\n"
     
     formatted_message += f"Current user message:\n\n{message}"
