@@ -142,7 +142,8 @@ def format_endpoint_response(response, user_id, prompt_id):
         steps = build_sets_list(step_name, step_response, prompt_id, suffix, user_id, steps)
 
 
-
+    if steps:
+        steps[-1]["step_type"] = "output"
 
     final_response = json_parser(response['output'])
     

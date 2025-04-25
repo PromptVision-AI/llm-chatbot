@@ -4,6 +4,7 @@ from io import BytesIO
 import json
 import torch
 import numpy as np
+import gc
 import cv2 # Needed for mask blurring
 from PIL import Image
 # import matplotlib # Not needed
@@ -11,7 +12,7 @@ from PIL import Image
 import tempfile
 import shutil # For potential cleanup on error
 import warnings
-
+from tools.diffusion.memory_utils import _free_vram
 from diffusers import (
     StableDiffusionXLInpaintPipeline,   # For Base
     StableDiffusionXLImg2ImgPipeline,   # For Refiner
@@ -119,7 +120,6 @@ def diffusion_inpainting_tool(input: str) -> str:
     """
     # Explicitly trigger garbage collection and cache clearing
     if torch.cuda.is_available():
-        import gc
         gc.collect()
         torch.cuda.empty_cache()
         print("Cleaned up CUDA cache.")   
@@ -263,12 +263,9 @@ def diffusion_inpainting_tool(input: str) -> str:
         # --- 7. VRAM Management ---
         # ... (VRAM management remains the same) ...
         print("Moving base pipeline to CPU, clearing cache...")
-        # ... (base_pipeline.to("cpu"), empty_cache, latents.cpu()) ...
-        base_pipeline.to("cpu") # Move base off GPU
-        del base_pipeline # Explicitly delete to help GC
-        if device == "cuda":
-            torch.cuda.empty_cache()
-            torch.cuda.ipc_collect()
+
+        _free_vram(base_pipeline)
+
         latents = latents.cpu() # Move latents to CPU
         print("VRAM cleared.")
 
@@ -326,7 +323,6 @@ def diffusion_inpainting_tool(input: str) -> str:
         if 'refiner_pipeline' in locals() and refiner_pipeline is not None: del refiner_pipeline
         # Explicitly trigger garbage collection and cache clearing
         if torch.cuda.is_available():
-            import gc
             gc.collect()
             torch.cuda.empty_cache()
             print("Cleaned up pipelines and emptied CUDA cache.")
