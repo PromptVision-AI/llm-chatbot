@@ -27,7 +27,7 @@ from utils.utils import json_parser, upload_image_to_cloudinary
 
 # --- Configuration Constants ---
 # Define Local Load Paths (Relative to script execution location)
-LATENT_DIFFUSION_FOLDER = "X:/PromptVision/llm-chatbot/tools/diffusion/LatentDiffusion"
+LATENT_DIFFUSION_FOLDER = "tools/diffusion/LatentDiffusion"
 BASE_MODEL_LOAD_PATH = os.path.join(LATENT_DIFFUSION_FOLDER, "sdxl_inpaint_base_local")
 REFINER_MODEL_LOAD_PATH = os.path.join(LATENT_DIFFUSION_FOLDER, "sdxl_refiner_local")
 
