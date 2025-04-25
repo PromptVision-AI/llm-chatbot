@@ -74,7 +74,7 @@ def get_conversation_history(conversation_id, limit=10):
     Retrieve conversation history for a specific user.
     
     Args:
-        conversation_id (str): Identifier for the conversation
+        conversation_id (int): Identifier for the conversation
         limit (int, optional): Maximum number of messages to retrieve
         
     Returns:
@@ -84,6 +84,7 @@ def get_conversation_history(conversation_id, limit=10):
         result = supabase.table("prompts") \
                 .select("*") \
                 .eq("conversation_id", conversation_id) \
+                .filter("response", "not.is", "null") \
                 .order("created_at", desc=True) \
                 .limit(limit) \
                 .execute()
