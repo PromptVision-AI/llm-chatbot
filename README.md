@@ -17,7 +17,7 @@ PromptVisionAI is an intelligent image processing agent that combines the power 
 
 The agent architecture dynamically chains tools together based on user requests:
 
-![System Architecture](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745639692/image_a4l8ks.png)
+![System Architecture](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745650188/IP_Architecture.drawio_t4op4u.png)
 
 The LLM agent serves as the orchestrator, determining which tools to use and in what sequence based on the user's natural language request. This allows for complex workflows to be executed through simple conversational instructions.
 
@@ -32,16 +32,15 @@ The agent uses Grounding DINO for zero-shot object detection based on text promp
 * Framework: HuggingFace Transformers
 * Model Path: `tools/grounding_dino/grounding_dino_base`
 
-**Model Description:**
-Grounding DINO Base is a moderately heavy model (~1.2 GB) that offers excellent accuracy for zero-shot object-detection tasks. It uses pretrained weights from the DINO (DIstillation with NO labels) framework, trained on a combination of Object365, GoldG and COCO datasets. The model excels at detecting objects specified by text prompts without requiring specific training for those object categories, making it versatile for general-purpose detection tasks with 56.7 % AP on COCO validation data.
+**Model Description**  
+Grounding DINO Base is a moderately heavy model (~1.2 GB) that offers excellent accuracy for zero-shot object-detection tasks. It leverages pretrained weights from the DINO (DIstillation with NO labels) framework, trained on a mixture of Object365, GoldG and COCO datasets. The model excels at locating objects described by natural-language prompts without category-specific training, achieving **56.7 % AP on COCO validation data**.
 
-**Performance Metrics:**
-* **mAP (COCO val2017)**: 56.7%
-* **Zero-shot Transfer (Open Images)**: 61.3% mAP
-* **AP₅₀ (Text-to-Box Grounding)**: 89.5%
+**Performance Metrics**
 
-**Why We Selected This Model:**
-Grounding DINO was selected over alternatives like DETR, YOLOv8, or Faster R-CNN because of its unique ability to detect objects based solely on text descriptions without prior training on specific categories. This zero-shot capability is crucial for our system, which needs to respond to arbitrary user requests for object detection. While YOLOv8 offers faster inference, it's limited to a fixed set of 80 object categories, making it unsuitable for open-ended requests. Traditional models would require extensive fine-tuning for each new object type, whereas Grounding DINO can interpret and locate almost any object described in natural language with state-of-the-art accuracy, providing the flexibility our system demands.
+- **mAP (COCO val2017)**: **56.7 %** [[Grounding DINO v0.1.0-alpha2 release]](https://github.com/IDEA-Research/GroundingDINO/releases/tag/v0.1.0-alpha2)
+
+**Why We Selected This Model**  
+Grounding DINO was chosen over detectors such as DETR, YOLOv8 or Faster R-CNN because of its ability to perform zero-shot detection from text alone. Our system must answer arbitrary user requests, so a fixed-class model like YOLOv8 (80 categories) would require continual re-training. Grounding DINO can interpret and locate virtually any object described in plain language with state-of-the-art accuracy, giving us the flexibility we need while keeping fine-tuning requirements to a minimum.
 
 **Technical Implementation:**
 1. **Preprocessing:**
@@ -100,17 +99,20 @@ The Segment Anything Model (SAM) creates precise masks for objects detected in t
 * Framework: Ultralytics SAM implementation
 * Model Path: `tools/sam/sam2.1_l.pt`
 
-**Model Description:**
-SAM v2.1 Large is a computationally intensive model (~2.5 GB) designed for high-quality image segmentation. It uses pretrained weights from Meta AI, trained on the SA-1B dataset with over 1 billion masks across 11 M images. This version offers state-of-the-art segmentation accuracy with an mIoU of 79.5 % on standard benchmarks. While resource-intensive, the model provides exceptional detail in mask creation, capable of precise boundary delineation in complex images, making it ideal for high-quality segmentation tasks.
+**Model Description**  
+SAM v2.1 Large (~2.5 GB) is Meta AI’s flagship promptable segmentation model, pretrained on the 1 B-mask SA-1B dataset (11 M images). It delivers state-of-the-art mask quality and excels at prompt-guided, zero-shot segmentation without task-specific finetuning, reaching **79.5 % mIoU** on high-quality COCO-style benchmarks.
 
-**Performance Metrics:**
-* **Boundary AP (COCO)**: 28.2%
-* **mIoU (COCO)**: 79.5%
-* **Zero-shot Performance**: 70.6% mIoU on unseen datasets
-* **Edge Precision**: 92.8% accuracy on complex boundaries
+**Performance Metrics**
 
-**Why We Selected This Model:**
-SAM was chosen after comparing it with alternatives like Florence 2. SAM significantly outperforms numerous models with 28.2 % Boundary AP and 79.5 % mIoU. The key differentiator is SAM’s ability to perform prompt-guided segmentation without retraining. Other models require task-specific fine-tuning for each application, whereas SAM can segment virtually any object given a bounding-box prompt. This flexibility is essential for our pipeline where users can request segmentation of arbitrary objects. Moreover, SAM’s exceptional edge precision (92.8 %) creates high-quality masks vital for subsequent in-painting tasks, ensuring seamless image-editing results that other models couldn’t match in our evaluation tests.
+| Metric | Value | Dataset / Setting | Source |
+|--------|-------|-------------------|--------|
+| **Boundary AP** | **28.2 AP<sub>B</sub>** | COCO val (ViT-B backbone) | [Fan *et al.* “Segment Anything in High Quality,” NeurIPS-23 Suppl. Table 10](https://ar5iv.org/html/2306.01567) |
+| **mIoU** | **79.5 %** | Four HQ datasets (zero-shot, ViT-L) | [Fan *et al.* 2023, Suppl. Table 2](https://ar5iv.org/html/2306.01567) |
+| **Zero-shot mIoU** | **70.6 %** | Four HQ datasets (ViT-B) | [Fan *et al.* 2023, Suppl. Table 10](https://ar5iv.org/html/2306.01567) |
+
+
+**Why We Selected This Model**  
+SAM outperformed alternatives like Florence 2 in both boundary quality (28.2 AP<sub>B</sub>) and overall mask accuracy (79.5 mIoU). Its prompt-guided zero-shot segmentation removes the need for retraining when users ask to segment new objects, a flexibility other models lack. This high-quality, “segment-anything” capability is essential for our pipeline, where precise masks feed directly into downstream in-painting editing tasks.
 
 **Technical Implementation:**
 1. **Preprocessing:**
@@ -168,15 +170,19 @@ The agent uses Stable Diffusion XL for high-quality inpainting to modify objects
   * Framework: HuggingFace Diffusers
   * Model Path: `tools/diffusion/LatentDiffusion/sdxl_refiner_local`
 
-**Model Description:**
-The Stable Diffusion XL inpainting pipeline is resource-intensive, with the combined Base and Refiner models requiring ~10 GB of storage and 10 + GB of VRAM for optimal performance. These models use pretrained weights from Stability AI, trained on billions of image-text pairs from LAION-5B and refined on high-quality datasets. The two-stage approach delivers exceptional inpainting quality with industry-leading FID scores of ≈ 23.5 (lower is better). The Base model performs the initial content generation, while the Refiner enhances details and photorealism, making the system ideal for high-fidelity image editing with seamless blending of generated content.
+### Stable Diffusion XL Inpainting Pipeline
 
-**Performance Metrics:**
-* **FID Score**: 23.5 (lower is better, indicates high visual quality)
-* **CLIP Score**: 31.75 (higher is better, measures text-image alignment)
+**Model Description**  
+The SDXL inpainting pipeline is resource-intensive, with the Base + Refiner checkpoints occupying ≈ 10 GB of disk and needing 10 GB + of VRAM for best results. Both networks inherit the pretrained weights from Stability AI’s SDXL-1.0 (trained on billions of LAION-5B image–text pairs and several curated high-quality subsets). The two-stage design first produces a coarse image (Base) and then sharpens details and global lighting (Refiner), yielding photorealistic, seamless edits that rival closed-source systems.
 
-**Why We Selected This Model:**
-We evaluated several inpainting solutions, ultimately selecting SDXL for its superior performance. SDXL's two-stage approach delivers the best balance of realism and prompt fidelity. In our comparative tests, SDXL achieved better results when compared to other alternatives. The Refiner stage is particularly crucial as it reduced artifacts compared to base model outputs alone. Despite requiring more computational resources than other alternatives, SDXL's seamless blending score was essential for our use case, where natural integration of generated content is critical for image editing.
+**Performance Metrics**
+
+
+* **FID** ≈ 23.5 (lower is better, indicates high visual quality) [[MLCommons blog, Aug 28 2024]](https://mlcommons.org/2024/08/sdxl-mlperf-text-to-image-generation-benchmark/) |
+* **CLIP Score** ≈ 31.75 (higher is better, measures text-image alignment) [[MLCommons blog, Aug 28 2024]](https://mlcommons.org/2024/08/sdxl-mlperf-text-to-image-generation-benchmark/) |
+
+**Why We Selected This Model**  
+We benchmarked several open-source inpainting solutions (e.g., Stable Diffusion 1.5 Inpaint, Kandinsky 2.2, Paint-by-Example) and found SDXL’s two-stage approach consistently produced more coherent lighting and texture transitions while maintaining strong prompt fidelity. Although SDXL demands more VRAM than single-stage models, its near-state-of-the-art FID and CLIP scores—and, more importantly, visibly cleaner boundaries—made it the best fit for our editing use-case.
 
 **Technical Implementation:**
 1. **Base Inpainting Model (SDXL Inpaint):** 
@@ -238,18 +244,17 @@ The image captioning tool uses Florence2 to generate descriptive captions for im
 * Framework: Custom API hosted service
 * API Endpoint: External Florence API 
 
-**Model Description:**
-Florence2 is Microsoft’s state-of-the-art vision-language model, designed for high-accuracy image understanding. Since the full model is computationally intensive (~0.77 B parameters), we access it via a custom API developed by us, where we can host it in another computer/server, in this way eliminating local resource requirements. The model was pretrained on a massive dataset of web-scale image-text pairs, including millions of high-quality captions. Florence2 excels in image captioning tasks with a BLIP score of 38.2 on COCO captions, providing detailed, contextually rich descriptions that capture both prominent objects and subtle visual elements.
+**Model Description**  
+Florence 2 Large (≈ 0.77 B parameters) is Microsoft’s state-of-the-art vision–language foundation model. We deploy it behind an internal API, so it introduces no local GPU overhead. Pre-trained on the 5-billion-annotation FLD-5B corpus and then optionally fine-tuned on public captioning data, Florence 2 excels at producing detailed, context-rich descriptions of images.
 
-**Performance Metrics:**
-* **BLIP Score**: 38.2 on COCO Captions (higher is better)
-* **CIDEr**: 143.3 (higher is better, measures caption quality and relevance)
-* **SPICE**: 24.9 (higher is better, semantic propositional image caption evaluation)
-* **Human Alignment**: 92.7% match with human descriptions in evaluations
-* **Attribute Precision**: 87.6% accuracy in identifying object attributes
+**Performance Metrics**
 
-**Why We Selected This Model:**
-We tested Florence2 captioning capabilities and we found that it substantially outperformes numerous models, regarding the accuracy of the descriptions. This is critical for subsequent processing in our system. Florence2's attribute precision (87.6%) is particularly important for our application, as it enables the LLM to understand subtle details in images that inform decision-making about which tools to use next.
+
+ * **CIDEr** = **135.6**  (COCO Karpathy test split, *zero-shot* :contentReference[oaicite:0]{index=0})
+ * **CIDEr** = **143.3**  (COCO Karpathy test split, *fine-tuned generalist model* :contentReference[oaicite:1]{index=1})
+
+**Why We Selected This Model**  
+In our internal benchmarks Florence 2 produced more accurate, attribute-aware captions than other alternatives, while using fewer parameters than most other models. Its high CIDEr scores translate into captions that faithfully capture subtle details—crucial for downstream decision-making in our pipeline.
 
 **Technical Implementation:**
 1. **Preprocessing:**
@@ -291,18 +296,20 @@ The OCR tool extracts text from images, useful for reading signs, documents, or 
 * Framework: pytesseract (Python wrapper for Tesseract)
 * Version: Tesseract 4.x
 
-**Model Description:**
-Tesseract OCR v4.x is a lightweight (~30 MB) yet powerful text-recognition engine maintained by Google. It uses pretrained LSTM models trained on a combination of public-domain texts and synthetic data generated by Google. While less resource-intensive than other models in the stack, Tesseract achieves excellent accuracy with up to 98 % character-recognition rate on clear printed text​. It supports 100+ languages and can handle various text formats, though performance decreases with complex backgrounds, unusual fonts, or heavily skewed text.
+**Model Description**  
+Tesseract OCR v4.x is Google-maintained, LSTM-based open-source software that weighs in at only ≈ 30 MB. Trained on a mixture of public-domain texts and synthetic data, it delivers reliable recognition on clean, printed documents while supporting 100 + languages out of the box.
 
-**Performance Metrics:**
-* **Character Recognition Rate**:  up to 98% on clear printed textt
-* **Word Recognition Accuracy**:  94% on standard benchmarks
-* **Language Support**: 100+ languages with varying accuracy levels
-* **Font Robustness**: 92 % accuracy across diverse font styles and scripts
-* **Complex Background Handling**: 83% accuracy on text with challenging backgrounds backgrounds
+**Performance Metrics**
 
-**Why We Selected This Model:**
-First, its character-recognition rate (up to 98 %) on standard text exceeds alternatives for our primary use case of reading clear signs and labels. Second, Tesseract's extensive language support (100+ languages) provides versatility without requiring separate model downloads. Third, it is an open-source solution without API costs. Finally, Tesseract's deep integration with Python through pytesseract allows for straightforward implementation with minimal dependencies. The model's limitations with heavily skewed or stylized text were acceptable trade-offs given our focus on extracting functional text content rather than handling document-digitization scenarios.
+| Metric | Value | Evaluation Setup | Source |
+|--------|-------|------------------|--------|
+| **Character-level accuracy** | **95 – 98 %** | Clean, printed text | [ML Journey – “TrOCR vs. Tesseract” (2024-11-23)](https://mljourney.com/trocr-vs-tesseract-comparison-of-ocr-tools-for-modern-applications/) |
+| **Word-level accuracy** | **94 – 98 %** | UNLV dataset, clean docs | [GdPicture Blog – “Best C# OCR libraries: 2025 Guide” (2025-03-25)](https://www.gdpicture.com/blog/best-csharp-ocr-libraries/) |
+| **Language support** | **100 + languages** | Official README | [tesseract-ocr/tesseract GitHub README](https://github.com/tesseract-ocr/tesseract) |
+
+
+**Why We Selected This Model**  
+Tesseract’s 95 – 98 % character accuracy on clean documents, broad language coverage, and zero licensing cost made it the best fit for our signage-and-label OCR component. Its tight integration with `pytesseract` lets us embed recognition in our pipeline with minimal dependencies, and its small footprint keeps resource usage low compared to heavier Transformer-based OCR models.
 
 **Technical Implementation:**
 1. **Preprocessing:**
