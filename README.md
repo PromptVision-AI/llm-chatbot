@@ -84,7 +84,33 @@ Segmentation Mask:
 
 ### 3. Image Inpainting (Stable Diffusion XL)
 
-The agent uses Stable Diffusion XL for high-quality inpainting to modify objects based on text prompts.
+The agent uses Stable Diffusion XL for high-quality inpainting to modify objects based on text prompts. The implementation is a two-stage process:
+
+**Technical Implementation:**
+1. **Base Inpainting Model (SDXL Inpaint):** 
+   - Takes the original image, a mask, and a text prompt
+   - Performs initial inpainting up to a defined denoising threshold (0.8)
+   - Outputs latent representations rather than a final image
+   - Uses 28 inference steps with DPMSolverMultistepScheduler
+   - Applies a default negative prompt to avoid unwanted artifacts
+
+2. **Refiner Model (SDXL Img2Img):**
+   - Takes the latents from the base model
+   - Continues the denoising process from where the base model stopped
+   - Uses 15 inference steps to refine details and add photorealism
+   - Outputs the final high-quality image
+
+3. **Memory Optimization:**
+   - Implements VRAM management between stages
+   - Moves the base model to CPU after first stage
+   - Uses model CPU offloading
+   - Enables xformers for memory-efficient attention
+   - Implements VAE tiling for processing larger images
+
+4. **Preprocessing:**
+   - Ensures image dimensions are multiples of 8 (required by VAE)
+   - Prepares mask with blurring and thresholding for smoother blending
+   - Handles resolution consistency between image and mask
 
 **Input:**
 ```json
@@ -270,13 +296,79 @@ The agent architecture consists of:
    - Returns a black and white version of the image
    - Simple but effective image transformation
 
-## 🚀 Setup
+## 🚀 Setup and Installation
 
-Please refer to the installation instructions in the original README for details on:
-- Dependencies installation
-- Model weights download
-- Environment variables configuration
-- Supabase setup for chat history
+### Prerequisites
+
+- Python 3.10+
+- CUDA-compatible GPU for optimal performance (CPU mode is also supported)
+- 10+ GB of disk space for model weights
+
+### Installation Steps
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/PromptVision-AI/llm-chatbot.git
+   cd llm-chatbot
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+
+3. **Download required model weights:**
+   
+   - **Grounding DINO**:
+     ```bash
+     mkdir -p tools/grounding_dino/grounding_dino_base
+     # Download model files from huggingface.co/IDEA-Research/grounding-dino-base
+     # Place model files in tools/grounding_dino/grounding_dino_base directory
+     ```
+
+   - **SAM (Segment Anything Model)**:
+     ```bash
+     mkdir -p tools/sam
+     # Download SAM weights from Facebook Research
+     # Place sam2.1_l.pt in the tools/sam directory
+     ```
+
+   - **Stable Diffusion XL**:
+     ```bash
+     mkdir -p tools/diffusion/LatentDiffusion/sdxl_inpaint_base_local
+     mkdir -p tools/diffusion/LatentDiffusion/sdxl_refiner_local
+     # Download SDXL base inpainting model and refiner model
+     # Place in their respective directories
+     ```
+
+4. **Configure environment variables:**
+   
+   Create a `.env` file in the project root with the following required variables:
+   ```
+   # LLM API (Groq)
+   GROQ_API_KEY=your_groq_api_key
+   LLM_NAME=llama-3.3-70b-versatile
+   
+   # Cloudinary for image hosting
+   CLOUDINARY_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   
+   # Supabase for chat history
+   SUPABASE_URL=your_supabase_project_url
+   SUPABASE_KEY=your_supabase_anon_key
+   ```
+
+5. **Set up Supabase:**
+   - Create a new project in Supabase
+   - Run the SQL setup script to create the required tables (see below)
+
+6. **Start the server:**
+   ```bash
+   python main.py
+   ```
+   The server will start on port 5000 by default.
 
 ## 📝 API Endpoints
 

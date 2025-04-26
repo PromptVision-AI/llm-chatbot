@@ -11,3 +11,13 @@ matplotlib==3.9.4
 numpy==2.0.2
 requests==2.32.3
 pytesseract==0.3.13
+diffusers==0.33.1
+torch==2.6.0
+torchvision==0.21.0
+xformers==0.0.29.post3
+opencv-python==4.11.0.86
+accelerate==1.6.0
+fsspec==2025.3.0
+huggingface-hub==0.30.2
+safetensors==0.5.3
+tqdm==4.67.1
