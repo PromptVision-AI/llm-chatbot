@@ -106,9 +106,9 @@ SAM v2.1 Large (~2.5 GB) is Meta AI’s flagship promptable segmentation model, 
 
 | Metric | Value | Dataset / Setting | Source |
 |--------|-------|-------------------|--------|
-| **Boundary AP** | **28.2 AP<sub>B</sub>** | COCO val (ViT-B backbone) | [Fan *et al.* “Segment Anything in High Quality,” NeurIPS-23 Suppl. Table 10](https://ar5iv.org/html/2306.01567) |
-| **mIoU** | **79.5 %** | Four HQ datasets (zero-shot, ViT-L) | [Fan *et al.* 2023, Suppl. Table 2](https://ar5iv.org/html/2306.01567) |
-| **Zero-shot mIoU** | **70.6 %** | Four HQ datasets (ViT-B) | [Fan *et al.* 2023, Suppl. Table 10](https://ar5iv.org/html/2306.01567) |
+| **Boundary AP** | **28.2 AP<sub>B</sub>** | COCO val (ViT-B backbone) | [“Segment Anything in High Quality”](https://ar5iv.org/html/2306.01567) |
+| **mIoU** | **79.5 %** | Four HQ datasets (zero-shot, ViT-L) | [“Segment Anything in High Quality”](https://ar5iv.org/html/2306.01567) |
+| **Zero-shot mIoU** | **70.6 %** | Four HQ datasets (ViT-B) | [“Segment Anything in High Quality”](https://ar5iv.org/html/2306.01567) |
 
 
 **Why We Selected This Model**  
@@ -250,8 +250,8 @@ Florence 2 Large (≈ 0.77 B parameters) is Microsoft’s state-of-the-art visio
 **Performance Metrics**
 
 
- * **CIDEr** = **135.6**  (COCO Karpathy test split, *zero-shot*) [[Fan *et al.* 2023, Table 4]](https://arxiv.org/abs/2311.06242)
- * **CIDEr** = **143.3**  (COCO Karpathy test split, *fine-tuned generalist model*) [[Fan *et al.* 2023, Table 5]](https://arxiv.org/abs/2311.06242)
+ * **CIDEr** = **135.6**  (COCO Karpathy test split, *zero-shot*) [[Florence-2: Advancing a Unified Representation for a Variety of Vision Tasks]](https://arxiv.org/pdf/2311.06242)
+ * **CIDEr** = **143.3**  (COCO Karpathy test split, *fine-tuned generalist model*) [[Florence-2: Advancing a Unified Representation for a Variety of Vision Tasks]](https://arxiv.org/pdf/2311.06242)
 
 **Why We Selected This Model**  
 In our internal benchmarks Florence 2 produced more accurate, attribute-aware captions than other alternatives, while using fewer parameters than most other models. Its high CIDEr scores translate into captions that faithfully capture subtle details—crucial for downstream decision-making in our pipeline.
