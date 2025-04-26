@@ -27,6 +27,30 @@ The LLM agent serves as the orchestrator, determining which tools to use and in 
 
 The agent uses Grounding DINO for zero-shot object detection based on text prompts.
 
+**Model:** Grounding DINO Base
+* Architecture: Transformer-based zero-shot detection model
+* Framework: HuggingFace Transformers
+* Model Path: `tools/grounding_dino/grounding_dino_base`
+
+**Technical Implementation:**
+1. **Preprocessing:**
+   - Input image is loaded, converted to RGB format
+   - Text prompts are formatted as nested lists for model input
+   - Inputs are processed using a specialized `AutoProcessor` from Transformers
+
+2. **Detection Process:**
+   - Tokenized inputs pass through the model architecture
+   - Grounding DINO performs object-text alignment and localization
+   - A post-processing step applies threshold filtering (box_threshold=0.45, text_threshold=0.3)
+   - Bounding boxes are normalized to the original image dimensions
+
+3. **Postprocessing:**
+   - Extracted boxes are converted to [x1, y1, x2, y2] format
+   - Centroids are calculated as the center points of each bounding box
+   - Confidence scores are rounded to 3 decimal places
+   - Matplotlib visualizes boxes on the original image with labels and scores
+   - Annotated image is saved as PNG and uploaded to Cloudinary
+
 **Input:**
 ```json
 {
@@ -60,6 +84,30 @@ Object Detection (Bounding Box):
 
 The Segment Anything Model (SAM) creates precise masks for objects detected in the previous step.
 
+**Model:** SAM (Segment Anything Model) v2.1 Large
+* Architecture: Mask decoder architecture
+* Framework: Ultralytics SAM implementation
+* Model Path: `tools/sam/sam2.1_l.pt`
+
+**Technical Implementation:**
+1. **Preprocessing:**
+   - Input image is downloaded and stored as a temporary file
+   - Bounding boxes from Grounding DINO are passed directly to SAM
+
+2. **Segmentation Process:**
+   - SAM model inference runs on the image with provided bounding boxes
+   - The model generates binary mask predictions for each bounding box
+
+3. **Postprocessing:**
+   - Multiple masks (if detected) are merged into a single binary mask using logical OR
+   - Advanced morphological operations enhance mask quality:
+     * Opening operation (erosion then dilation) removes noise
+     * Closing operation (dilation then erosion) fills holes
+     * Small isolated regions (<20 pixels) are removed
+     * Final dilation expands the mask slightly
+     * Gaussian blur with thresholding smooths edges
+   - Processed mask is converted to a PNG image and uploaded to Cloudinary
+
 **Input:**
 ```json
 {
@@ -86,17 +134,28 @@ Segmentation Mask:
 
 The agent uses Stable Diffusion XL for high-quality inpainting to modify objects based on text prompts. The implementation is a two-stage process:
 
+**Models:**
+* **Base Model:** Stable Diffusion XL Inpainting
+  * Architecture: Latent diffusion model with U-Net backbone
+  * Framework: HuggingFace Diffusers
+  * Model Path: `tools/diffusion/LatentDiffusion/sdxl_inpaint_base_local`
+
+* **Refiner Model:** Stable Diffusion XL Img2Img
+  * Architecture: Latent diffusion model specialized for refinement
+  * Framework: HuggingFace Diffusers
+  * Model Path: `tools/diffusion/LatentDiffusion/sdxl_refiner_local`
+
 **Technical Implementation:**
 1. **Base Inpainting Model (SDXL Inpaint):** 
    - Takes the original image, a mask, and a text prompt
    - Performs initial inpainting up to a defined denoising threshold (0.8)
    - Outputs latent representations rather than a final image
    - Uses 28 inference steps with DPMSolverMultistepScheduler
-   - Applies a default negative prompt to avoid unwanted artifacts
+   - Applies a default negative prompt to avoid unwanted artifacts: "blurry, low quality, distortion, mutation, watermark, signature, text, words"
 
 2. **Refiner Model (SDXL Img2Img):**
    - Takes the latents from the base model
-   - Continues the denoising process from where the base model stopped
+   - Continues the denoising process from where the base model stopped (denoising_start=0.8)
    - Uses 15 inference steps to refine details and add photorealism
    - Outputs the final high-quality image
 
@@ -106,11 +165,13 @@ The agent uses Stable Diffusion XL for high-quality inpainting to modify objects
    - Uses model CPU offloading
    - Enables xformers for memory-efficient attention
    - Implements VAE tiling for processing larger images
+   - Uses garbage collection and CUDA cache clearing
 
 4. **Preprocessing:**
-   - Ensures image dimensions are multiples of 8 (required by VAE)
-   - Prepares mask with blurring and thresholding for smoother blending
-   - Handles resolution consistency between image and mask
+   - Image dimensions are verified/adjusted to multiples of 8 (required by VAE)
+   - Images larger than VAE thresholds are resized
+   - Mask is prepared with Gaussian blur (sigmaX=3, sigmaY=3) and thresholding (127)
+   - Handles resolution consistency between image and mask using PIL.Image.resize
 
 **Input:**
 ```json
@@ -137,7 +198,27 @@ Inpainted Image (Lion to Cat):
 
 ### 4. Image Captioning (Florence2)
 
-The image captioning tool uses Florence2 to generate descriptive captions for images, providing context for further processing. The Florence2 capabilities are made available through a custom API ([Florence API](https://github.com/PromptVision-AI/florence_api)).
+The image captioning tool uses Florence2 to generate descriptive captions for images, providing context for further processing.
+
+**Model:** Florence2 Vision-Language Model
+* Architecture: Multimodal transformer with vision and language capabilities
+* Framework: Custom API hosted service
+* API Endpoint: External Florence API 
+
+**Technical Implementation:**
+1. **Preprocessing:**
+   - Input image is downloaded from provided URL
+   - Image format is determined and preserved for API request
+   - A temporary filename with appropriate extension is generated
+
+2. **API Interaction:**
+   - Image is sent to the Florence API endpoint as a multipart/form-data request
+   - API does the heavy lifting of running the Florence2 model
+   - Response includes the generated detailed caption
+
+3. **Note:**
+   - The Florence2 capabilities are made available through a custom API ([Florence API](https://github.com/PromptVision-AI/florence_api))
+   - Processing is done on the server-side, reducing client-side compute requirements
 
 **Input:**
 ```json
@@ -159,6 +240,25 @@ The image captioning tool uses Florence2 to generate descriptive captions for im
 
 The OCR tool extracts text from images, useful for reading signs, documents, or any text content in visual materials.
 
+**Model:** Tesseract OCR
+* Architecture: LSTM-based OCR engine
+* Framework: pytesseract (Python wrapper for Tesseract)
+* Version: Tesseract 4.x
+
+**Technical Implementation:**
+1. **Preprocessing:**
+   - Input image is downloaded from provided URL
+   - Image is loaded using PIL's Image module
+
+2. **Text Extraction:**
+   - Pytesseract's `image_to_string` function processes the image
+   - No specialized preprocessing is applied to the image
+   - Extracted text is stripped of leading/trailing whitespace
+
+3. **Postprocessing:**
+   - Simple validation checks if any text was found
+   - Returns a message if no text could be extracted
+
 **Input:**
 ```json
 {
@@ -170,7 +270,7 @@ The OCR tool extracts text from images, useful for reading signs, documents, or 
 ```json
 {
   "success": true,
-  "text": "NO PARKING\nVIOLATORS WILL BE TOWED",
+  "extracted_text": "NO PARKING\nVIOLATORS WILL BE TOWED",
   "original_image_url": "https://example.com/sign.jpg"
 }
 ```
@@ -178,6 +278,20 @@ The OCR tool extracts text from images, useful for reading signs, documents, or 
 ### 6. Black & White Conversion
 
 A simple image transformation tool that converts colored images to black and white.
+
+**Technical Implementation:**
+1. **Preprocessing:**
+   - Input image is downloaded from the provided URL
+   - Image is loaded into memory using PIL
+
+2. **Conversion Process:**
+   - PIL's `convert("L")` method transforms the image to grayscale
+   - This creates an 8-bit single channel image where each pixel has a value from 0 (black) to 255 (white)
+
+3. **Postprocessing:**
+   - Converted image is saved to a temporary file as PNG
+   - Image is uploaded to Cloudinary for storage
+   - Temporary local file is deleted after upload
 
 **Input:**
 ```json
