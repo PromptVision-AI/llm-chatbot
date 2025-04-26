@@ -432,49 +432,90 @@ The agent maintains context of the conversation and can work with previously mod
 
 ### LLM Agent Architecture
 
-The system uses an LLM (Llama-3.3-70b via Groq) to:
-1. Parse user requests
-2. Determine the required sequence of operations
-3. Call appropriate tools in the correct order
-4. Generate natural language responses
+PromptVisionAI employs a function-calling agent architecture powered by Llama-3.3-70b (accessed via Groq's API). This high-parameter model serves as the central orchestrator, providing both the reasoning capabilities and the user interface for the entire system.
 
-The agent architecture consists of:
-- **System Prompt**: Guides the LLM's behavior
-- **Tool Definitions**: Provide the LLM with capabilities
-- **Memory**: Tracks conversation context
-- **Execution Engine**: Manages the workflow between tools
+#### Agent Configuration
+
+The agent follows a structured function-calling pattern where:
+
+1. **Initialization**: On startup, the agent loads tool definitions, system prompts, and establishes connections to external services (Cloudinary for image hosting and Supabase for persistence).
+
+2. **Execution Model**: The agent operates in a predict-execute-observe loop:
+   - **Predict**: The LLM determines which tools to call based on user input
+   - **Execute**: The system runs the selected tools with specified parameters
+   - **Observe**: Results are collected and fed back to the LLM for next steps
+
+3. **Routing Logic**: All user messages are passed through the primary LLM interface, which dynamically decides whether to handle the request directly or delegate to specialized tools.
+
+#### Chain of Thought Reasoning
+
+The system leverages the LLM's inherent chain-of-thought capabilities to:
+
+1. **Parse Intent**: Extract the user's primary goal from natural language
+2. **Decompose Tasks**: Break complex operations into sequential tool executions
+3. **Plan Execution**: Determine which tools must be used in which order
+4. **Interpret Results**: Evaluate tool outputs to decide on next steps
+5. **Generate Responses**: Convert technical results into user-friendly language
+
+For example, when a user requests "Change this lion to an orange cat," the agent internally reasons: "I need to (1) detect the lion, (2) create a precise mask, (3) use inpainting to replace it with a cat, and (4) return the result with an explanation."
+
+#### System Prompt Engineering
+
+The system prompt is carefully designed with several components:
+
+1. **Role Definition**: Establishes the agent as an image processing assistant
+2. **Tool Documentation**: Detailed descriptions of each tool's capabilities and limitations
+3. **Decision Guidelines**: Rules for determining which tools to use for which tasks
+4. **Response Formatting**: Instructions on how to present results to users
+5. **Error Handling**: Procedures for gracefully managing failures
+
+The prompt instructs the agent to think step-by-step, consider context from prior conversation turns, and prioritize user intent over literal command interpretation.
+
+#### Tool Selection Algorithm
+
+The agent's tool selection process follows these principles:
+
+1. **Context Analysis**: Examines both the immediate request and conversation history
+2. **Task Classification**: Categorizes the request into high-level tasks (detection, editing, etc.)
+3. **Tool Matching**: Maps tasks to appropriate tools based on capability alignment
+4. **Dependency Resolution**: Identifies prerequisites (e.g., detection before segmentation)
+5. **Parameter Extraction**: Determines required inputs for each tool from the user request
+
+This process allows the agent to automatically build complex workflows like the detection → segmentation → inpainting chain demonstrated in the examples.
+
+#### Conversation Memory
+
+The system implements a persistent memory architecture:
+
+1. **Storage Backend**: Supabase database maintains conversation history with table schemas optimized for quick retrieval
+2. **Context Window**: Recent conversation turns are included in each LLM prompt
+3. **Image References**: Prior image URLs are tracked to enable chained operations
+4. **Tool Call History**: Previous tool executions are recorded to inform future decisions
+
+
+This memory system enables the contextual awareness demonstrated in Example 2, where the agent recognizes that "this horse" refers to the previously modified image.
+
+#### Execution Engine
+
+The execution engine coordinates the workflow between tools:
+
+1. **Resource Management**: GPU memory is carefully allocated between different models
+2. **Error Recovery**: Failed operations trigger fallback strategies when possible
+3. **Result Caching**: Processed images and intermediate results are cached to avoid redundant computation
+4. **State Tracking**: The execution state is monitored to ensure proper tool sequencing
 
 ### Image Processing Tools
 
-1. **Object Detection (Grounding DINO)**
-   - Takes an image URL and text prompt
-   - Returns bounding boxes and centroids of detected objects
-   - Produces annotated images showing detections
+The system integrates six specialized tools (detailed in previous sections):
 
-2. **Segmentation (SAM)**
-   - Takes an image URL and bounding boxes
-   - Returns a binary mask of the segmented object
-   - Uses morphological operations to improve mask quality
+1. **Object Detection** (Grounding DINO): Zero-shot object localization from text prompts
+2. **Segmentation** (SAM): Precise mask generation for detected objects
+3. **Inpainting** (Stable Diffusion XL): Two-stage image editing with base and refiner models
+4. **Image Captioning** (Florence2): Generates descriptive text from image content
+5. **OCR**: Extracts text from images using Tesseract
+6. **Black & White Conversion**: Simple grayscale transformation
 
-3. **Inpainting (Stable Diffusion XL)**
-   - Takes an image URL, mask URL, and text prompt
-   - Uses a two-stage pipeline (Base + Refiner)
-   - Returns a modified image with the specified changes
-
-4. **Image Captioning (Florence2)**
-   - Takes an image URL
-   - Returns a descriptive caption of the image content
-   - Powered by a custom Florence2 API ([GitHub](https://github.com/PromptVision-AI/florence_api))
-
-5. **OCR**
-   - Takes an image URL
-   - Returns extracted text from the image
-   - Useful for reading signs, documents, and other text in images
-
-6. **Black & White Conversion**
-   - Takes an image URL
-   - Returns a black and white version of the image
-   - Simple but effective image transformation
+The agent dynamically chains these tools together based on task requirements, creating a flexible system capable of handling a wide range of image processing requests through natural language instructions.
 
 ## 🚀 Setup and Installation
 
