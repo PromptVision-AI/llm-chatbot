@@ -209,10 +209,3 @@ Response:
 }
 ```
 
-## 🔮 Future Improvements
-
-- Add support for multiple object segmentation and selective editing
-- Implement more sophisticated image generation models
-- Add style transfer capabilities
-- Improve processing speed with model optimization
-- Add user interface for easier interaction
