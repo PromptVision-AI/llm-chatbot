@@ -1,91 +1,191 @@
-# LLM Chatbot with Supabase Chat History
+# PromptVisionAI: An LLM-Powered Image Processing Agent
 
-A Flask-based chatbot application that uses Groq's LLM API for generating responses, with tools for mathematical operations and image processing. The application includes a system prompt to guide the LLM's behavior and Supabase integration for storing and retrieving chat history.
+PromptVisionAI is an intelligent image processing agent that combines the power of Large Language Models (LLMs) with state-of-the-art computer vision models to perform complex visual tasks through natural language instructions.
 
-## Features
+## 🌟 Features
 
-- Chat with an LLM (Llama-3.3-70b via Groq)
-- System message properly set for the agent
-- Per-user agent instances to prevent context mixing
-- Conversation memory for maintaining context
-- Mathematical operations (sum and multiply numbers)
-- Image processing capabilities:
-  - Convert images to black and white
-  - Object detection using Grounding DINO
-  - Image segmentation using SAM (Segment Anything Model)
-- Image upload via Cloudinary
-- Chat history storage and retrieval via Supabase
+- **Object Detection** with Grounding DINO
+- **Instance Segmentation** with Segment Anything Model (SAM)
+- **Image Inpainting/Editing** with Stable Diffusion XL
+- **OCR** for text extraction from images
+- **Image Captioning** for understanding image content
+- **Black & White Conversion** for simple image transformations
+- **Context-aware processing** that maintains conversation history
+- **Chained operations** automatically triggered by the LLM agent
 
-## Setup
+## 📋 Processing Pipeline
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd llm-chatbot
-   ```
+The agent follows a systematic approach for handling complex image editing tasks:
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+1. **Object Detection** → **Segmentation** → **Inpainting**
 
-3. Download required model weights:
-   - Grounding DINO:
-     ```bash
-     mkdir -p grounding_dino_base
-     # Download the model from: https://huggingface.co/IDEA-Research/grounding-dino-base
-     # Place the model files in the grounding_dino_base directory
-     ```
-   - SAM (Segment Anything Model):
-     ```bash
-     # Download SAM weights from: https://github.com/facebookresearch/segment-anything
-     # Place sam2.1_l.pt in the project root directory
-     ```
+![Image Processing Pipeline](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558406/tcloikbmlvpilx6sbu6r.png)
 
-4. Create a `.env` file with the following variables:
-   ```
-   GROQ_API_KEY=your_groq_api_key
-   CLOUDINARY_NAME=your_cloudinary_cloud_name
-   CLOUDINARY_API_KEY=your_cloudinary_api_key
-   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_KEY=your_supabase_anon_key
-   ```
+## 🛠️ Core Tools
 
-5. Set up Supabase:
-   - Create a new project in Supabase
-   - Run the following SQL in the Supabase SQL editor to create the required table:
-     ```sql
-     CREATE TABLE chat_history (
-         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-         user_id TEXT NOT NULL,
-         timestamp TIMESTAMPTZ NOT NULL,
-         message TEXT NOT NULL,
-         response TEXT NOT NULL,
-         image_url TEXT,
-         created_at TIMESTAMPTZ DEFAULT NOW()
-     );
+### 1. Object Detection (Grounding DINO)
 
-     CREATE INDEX idx_chat_history_user_id ON chat_history(user_id);
-     CREATE INDEX idx_chat_history_timestamp ON chat_history(timestamp);
+The agent uses Grounding DINO for zero-shot object detection based on text prompts.
 
-     ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
+**Input:**
+```json
+{
+  "image_url": "https://example.com/lion.jpg",
+  "prompt": "lion"
+}
+```
 
-     CREATE POLICY "Users can view their own chat history"
-         ON chat_history FOR SELECT
-         USING (auth.uid()::text = user_id);
+**Output:**
+```json
+{
+  "success": true,
+  "prompt": "lion",
+  "original_image_url": "https://example.com/lion.jpg",
+  "bounding_boxes": [[100, 150, 400, 500]],
+  "centroids": [[250, 325]],
+  "labels": ["lion"],
+  "annotated_image_url": "https://res.cloudinary.com/example/annotated_lion.jpg"
+}
+```
 
-     CREATE POLICY "Users can insert their own messages"
-         ON chat_history FOR INSERT
-         WITH CHECK (auth.uid()::text = user_id);
-     ```
+**Example:**
 
-6. Run the application:
-   ```bash
-   python main.py
-   ```
+Original Image:  
+![Original Lion](https://res.cloudinary.com/promptvisionai/image/upload/v1745558391/promptvisionai/63f045d5-5c7d-4240-b0cb-ce45faf509bb/inputs/18_input.jpg)
 
-## API Endpoints
+Object Detection (Bounding Box):  
+![Detected Lion](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558406/tcloikbmlvpilx6sbu6r.png)
+
+### 2. Instance Segmentation (SAM)
+
+The Segment Anything Model (SAM) creates precise masks for objects detected in the previous step.
+
+**Input:**
+```json
+{
+  "image_url": "https://example.com/lion.jpg",
+  "bounding_boxes": [[100, 150, 400, 500]]
+}
+```
+
+**Output:**
+```json
+{
+  "success": true,
+  "original_image_url": "https://example.com/lion.jpg",
+  "merged_mask_url": "https://res.cloudinary.com/example/lion_mask.jpg"
+}
+```
+
+**Example:**
+
+Segmentation Mask:  
+![Segmented Lion](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558413/fu0bergks65emy7rfsw0.png)
+
+### 3. Image Inpainting (Stable Diffusion XL)
+
+The agent uses Stable Diffusion XL for high-quality inpainting to modify objects based on text prompts.
+
+**Input:**
+```json
+{
+  "image_url": "https://example.com/lion.jpg",
+  "mask_url": "https://example.com/lion_mask.jpg",
+  "prompt": "orange cat"
+}
+```
+
+**Output:**
+```json
+{
+  "success": true,
+  "inpainted_image_url": "https://res.cloudinary.com/example/lion_to_cat.jpg",
+  "original_image_url": "https://example.com/lion.jpg"
+}
+```
+
+**Example:**
+
+Inpainted Image (Lion to Cat):  
+![Lion to Cat](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558467/jyqqbbqsx6yevryn0bpm.png)
+
+## 🔄 Workflow Examples
+
+### Example 1: Change Lion to Orange Cat
+
+1. **User Query**: "Change this lion to orange cat"
+2. **LLM Agent**: Recognizes this as an inpainting task requiring detection and segmentation first
+3. **Object Detection**: Identifies and localizes lion with bounding box
+4. **Segmentation**: Creates precise mask of the lion
+5. **Inpainting**: Replaces lion with orange cat based on mask
+
+**Result:**  
+![Lion to Cat](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558467/jyqqbbqsx6yevryn0bpm.png)
+
+### Example 2: Change Lion to Horse to Goat
+
+The agent maintains context of the conversation and can work with previously modified images:
+
+1. **User Query**: "Change the lion to a horse"
+   - Agent performs detection → segmentation → inpainting
+
+   **Result:**  
+   ![Lion to Horse](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558677/vtf1akahhjvgth9ikzop.png)
+
+2. **User Query**: "Change this horse to a goat"
+   - Agent performs new detection → segmentation → inpainting on the horse image
+
+   **Object Detection:**  
+   ![Detected Horse](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745563738/dm58uxl7cnt3xbkcawai.png)
+
+   **Segmentation:**  
+   ![Segmented Horse](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745563745/w4k13m9kkhavk6ixbuyp.png)
+
+   **Final Result:**  
+   ![Horse to Goat](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745563793/f2tueea22vuvj1bdi7yl.png)
+
+## 🔧 Technical Implementation
+
+### LLM Agent Architecture
+
+The system uses an LLM (Llama-3.3-70b via Groq) to:
+1. Parse user requests
+2. Determine the required sequence of operations
+3. Call appropriate tools in the correct order
+4. Generate natural language responses
+
+The agent architecture consists of:
+- **System Prompt**: Guides the LLM's behavior
+- **Tool Definitions**: Provide the LLM with capabilities
+- **Memory**: Tracks conversation context
+- **Execution Engine**: Manages the workflow between tools
+
+### Image Processing Pipeline
+
+1. **Object Detection (Grounding DINO)**
+   - Takes an image URL and text prompt
+   - Returns bounding boxes and centroids of detected objects
+   - Produces annotated images showing detections
+
+2. **Segmentation (SAM)**
+   - Takes an image URL and bounding boxes
+   - Returns a binary mask of the segmented object
+   - Uses morphological operations to improve mask quality
+
+3. **Inpainting (Stable Diffusion XL)**
+   - Takes an image URL, mask URL, and text prompt
+   - Uses a two-stage pipeline (Base + Refiner)
+   - Returns a modified image with the specified changes
+
+## 🚀 Setup
+
+Please refer to the installation instructions in the original README for details on:
+- Dependencies installation
+- Model weights download
+- Environment variables configuration
+- Supabase setup for chat history
+
+## 📝 API Endpoints
 
 ### Chat Endpoint
 
@@ -93,45 +193,26 @@ A Flask-based chatbot application that uses Groq's LLM API for generating respon
 POST /chat
 ```
 
-Parameters (multipart/form-data):
-- `message` (required): The user's message
-- `image` (optional): An image file
-- `user_id` (optional): User identifier (if not provided, a session ID will be used)
+Parameters (JSON):
+- `user_id`: User identifier
+- `prompt_id`: Prompt identifier
+- `prompt`: User's message/instruction
+- `conversation_id`: Conversation identifier
+- `input_image_url`: URL for image (optional)
 
 Response:
 ```json
 {
-  "response": "The LLM's response",
-  "user_id": "user_identifier"
+  "text_response": "I've changed the lion to an orange cat.",
+  "image_url": "https://res.cloudinary.com/example/original_lion.jpg",
+  "inpainted_image_url": "https://res.cloudinary.com/example/lion_to_cat.jpg"
 }
 ```
 
+## 🔮 Future Improvements
 
-
-## Model Weights
-
-The following model weights are required but not included in the repository due to size limitations:
-
-1. Grounding DINO Base Model:
-   - Download from: https://huggingface.co/IDEA-Research/grounding-dino-base
-   - Place in: `grounding_dino_base/` directory
-   - Required files:
-     - config.json
-     - pytorch_model.bin
-     - preprocessor_config.json
-     - special_tokens_map.json
-     - tokenizer_config.json
-     - tokenizer.json
-     - vocab.txt
-
-2. SAM (Segment Anything Model):
-   - Download from: https://github.com/facebookresearch/segment-anything
-   - Place `sam2.1_l.pt` in the project root directory
-
-## Customizing the System Prompt
-
-You can modify the system prompt in `agent/prompts.py` to change how the LLM behaves. The system prompt is passed to the agent as a `SystemMessage` when it's initialized, ensuring that it properly guides the model's behavior throughout the conversation.
-
-## Conversation Memory
-
-The application creates a new agent instance with its own memory for each user request. This ensures that conversation contexts don't get mixed between different users. Each agent uses LangChain's `ConversationBufferWindowMemory` to maintain context during a conversation, storing the last 5 interactions. The chat history from Supabase is loaded into this memory when processing a user's request.
+- Add support for multiple object segmentation and selective editing
+- Implement more sophisticated image generation models
+- Add style transfer capabilities
+- Improve processing speed with model optimization
+- Add user interface for easier interaction
