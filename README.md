@@ -8,18 +8,18 @@ PromptVisionAI is an intelligent image processing agent that combines the power 
 - **Instance Segmentation** with Segment Anything Model (SAM)
 - **Image Inpainting/Editing** with Stable Diffusion XL
 - **OCR** for text extraction from images
-- **Image Captioning** for understanding image content
+- **Image Captioning** with Florence2 for understanding image content
 - **Black & White Conversion** for simple image transformations
 - **Context-aware processing** that maintains conversation history
 - **Chained operations** automatically triggered by the LLM agent
 
-## 📋 Processing Pipeline
+## 🏗️ Architecture
 
-The agent follows a systematic approach for handling complex image editing tasks:
+The agent architecture dynamically chains tools together based on user requests:
 
-1. **Object Detection** → **Segmentation** → **Inpainting**
+![System Architecture](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745639692/image_a4l8ks.png)
 
-![Image Processing Pipeline](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558406/tcloikbmlvpilx6sbu6r.png)
+The LLM agent serves as the orchestrator, determining which tools to use and in what sequence based on the user's natural language request. This allows for complex workflows to be executed through simple conversational instructions.
 
 ## 🛠️ Core Tools
 
@@ -109,9 +109,71 @@ The agent uses Stable Diffusion XL for high-quality inpainting to modify objects
 Inpainted Image (Lion to Cat):  
 ![Lion to Cat](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558467/jyqqbbqsx6yevryn0bpm.png)
 
+### 4. Image Captioning (Florence2)
+
+The image captioning tool uses Florence2 to generate descriptive captions for images, providing context for further processing. The Florence2 capabilities are made available through a custom API ([Florence API](https://github.com/PromptVision-AI/florence_api)).
+
+**Input:**
+```json
+{
+  "image_url": "https://example.com/lion.jpg"
+}
+```
+
+**Output:**
+```json
+{
+  "success": true,
+  "caption": "A lion lying in the grass with trees in the background on the savanna.",
+  "original_image_url": "https://example.com/lion.jpg"
+}
+```
+
+### 5. OCR (Optical Character Recognition)
+
+The OCR tool extracts text from images, useful for reading signs, documents, or any text content in visual materials.
+
+**Input:**
+```json
+{
+  "image_url": "https://example.com/sign.jpg"
+}
+```
+
+**Output:**
+```json
+{
+  "success": true,
+  "text": "NO PARKING\nVIOLATORS WILL BE TOWED",
+  "original_image_url": "https://example.com/sign.jpg"
+}
+```
+
+### 6. Black & White Conversion
+
+A simple image transformation tool that converts colored images to black and white.
+
+**Input:**
+```json
+{
+  "image_url": "https://example.com/colorful_image.jpg"
+}
+```
+
+**Output:**
+```json
+{
+  "success": true,
+  "original_image_url": "https://example.com/colorful_image.jpg",
+  "bw_image_url": "https://res.cloudinary.com/example/bw_image.jpg"
+}
+```
+
 ## 🔄 Workflow Examples
 
-### Example 1: Change Lion to Orange Cat
+The LLM agent can dynamically chain different tools together based on the task. Here are some example workflows:
+
+### Example 1: Object Editing (Detection → Segmentation → Inpainting)
 
 1. **User Query**: "Change this lion to orange cat"
 2. **LLM Agent**: Recognizes this as an inpainting task requiring detection and segmentation first
@@ -122,7 +184,7 @@ Inpainted Image (Lion to Cat):
 **Result:**  
 ![Lion to Cat](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745558467/jyqqbbqsx6yevryn0bpm.png)
 
-### Example 2: Change Lion to Horse to Goat
+### Example 2: Contextual Image Processing
 
 The agent maintains context of the conversation and can work with previously modified images:
 
@@ -144,6 +206,22 @@ The agent maintains context of the conversation and can work with previously mod
    **Final Result:**  
    ![Horse to Goat](https://res.cloudinary.com/dpjbjlvu7/image/upload/v1745563793/f2tueea22vuvj1bdi7yl.png)
 
+### Example 3: Text Extraction (Captioning → OCR)
+
+1. **User Query**: "What does this sign say?"
+2. **LLM Agent**: Recognizes this requires text extraction
+3. **Image Captioning**: Identifies that there's text in the image 
+4. **OCR**: Extracts the text content from the image
+5. **LLM Response**: Provides the extracted text with context
+
+### Example 4: Image Understanding (Captioning → Detection)
+
+1. **User Query**: "Tell me what's in this image"
+2. **LLM Agent**: Recognizes this requires image understanding
+3. **Image Captioning**: Generates a general description of the image
+4. **Object Detection**: Identifies specific objects if needed for more detail
+5. **LLM Response**: Combines the caption and detection results to provide a comprehensive description
+
 ## 🔧 Technical Implementation
 
 ### LLM Agent Architecture
@@ -160,7 +238,7 @@ The agent architecture consists of:
 - **Memory**: Tracks conversation context
 - **Execution Engine**: Manages the workflow between tools
 
-### Image Processing Pipeline
+### Image Processing Tools
 
 1. **Object Detection (Grounding DINO)**
    - Takes an image URL and text prompt
@@ -176,6 +254,21 @@ The agent architecture consists of:
    - Takes an image URL, mask URL, and text prompt
    - Uses a two-stage pipeline (Base + Refiner)
    - Returns a modified image with the specified changes
+
+4. **Image Captioning (Florence2)**
+   - Takes an image URL
+   - Returns a descriptive caption of the image content
+   - Powered by a custom Florence2 API ([GitHub](https://github.com/PromptVision-AI/florence_api))
+
+5. **OCR**
+   - Takes an image URL
+   - Returns extracted text from the image
+   - Useful for reading signs, documents, and other text in images
+
+6. **Black & White Conversion**
+   - Takes an image URL
+   - Returns a black and white version of the image
+   - Simple but effective image transformation
 
 ## 🚀 Setup
 
