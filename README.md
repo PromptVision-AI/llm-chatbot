@@ -250,8 +250,8 @@ Florence 2 Large (≈ 0.77 B parameters) is Microsoft’s state-of-the-art visio
 **Performance Metrics**
 
 
- * **CIDEr** = **135.6**  (COCO Karpathy test split, *zero-shot* :contentReference[oaicite:0]{index=0})
- * **CIDEr** = **143.3**  (COCO Karpathy test split, *fine-tuned generalist model* :contentReference[oaicite:1]{index=1})
+ * **CIDEr** = **135.6**  (COCO Karpathy test split, *zero-shot*) [[Fan *et al.* 2023, Table 4]](https://arxiv.org/abs/2311.06242)
+ * **CIDEr** = **143.3**  (COCO Karpathy test split, *fine-tuned generalist model*) [[Fan *et al.* 2023, Table 5]](https://arxiv.org/abs/2311.06242)
 
 **Why We Selected This Model**  
 In our internal benchmarks Florence 2 produced more accurate, attribute-aware captions than other alternatives, while using fewer parameters than most other models. Its high CIDEr scores translate into captions that faithfully capture subtle details—crucial for downstream decision-making in our pipeline.
