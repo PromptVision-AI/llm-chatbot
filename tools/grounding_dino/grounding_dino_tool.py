@@ -79,7 +79,7 @@ def detect_objects_tool(input: str) -> str:
         results = processor.post_process_grounded_object_detection(
             outputs,
             inputs.input_ids,
-            box_threshold=0.45,
+            threshold=0.45,
             text_threshold=0.3,
             target_sizes=[image.size[::-1]]
         )
@@ -90,7 +90,7 @@ def detect_objects_tool(input: str) -> str:
         boxes = []
         scores = []
         labels = []
-        for box, score, label in zip(result["boxes"], result["scores"], result["labels"]):
+        for box, score, label in zip(result["boxes"], result["scores"], result["text_labels"]):
             box = [round(x, 2) for x in box.tolist()]
             boxes.append(box)
             scores.append(round(score.item(), 3))

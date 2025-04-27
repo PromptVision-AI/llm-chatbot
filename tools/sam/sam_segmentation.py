@@ -120,7 +120,7 @@ def sam_segment_tool(input: str) -> str:
         # Initialize SAM model
         model = SAM("tools/sam/sam2.1_l.pt")
         # Run SAM inference with bounding boxes
-        results = model(temp_path, bboxes=bounding_boxes)
+        results = model(temp_path, bboxes=bounding_boxes,verbose=False)
         
         # Extract masks from results
         masks = []
