@@ -4,7 +4,8 @@ import cloudinary.uploader
 import os
 from langchain.output_parsers.json import parse_json_markdown
 from flask import jsonify
-
+import re
+import json
 # Load the .env file
 load_dotenv()
 
@@ -75,7 +76,42 @@ STEP_TYPE_MAP = {
     "diffusion_inpainting_tool": ("image_inpainting", "inpainting"),
 }
 
-def get_info_from_step(step_name, step_response, prompt_id, suffix):
+def parse_thoughts(message: str) -> dict:
+    try:
+        # Split the message using "Action:" and "Action Input:"
+        action_split = message.split("Action:", 1)
+        if len(action_split) != 2:
+            raise ValueError("Missing 'Action:' part")
+        
+        thought = action_split[0].strip()
+        action_input_split = action_split[1].split("Action Input:", 1)
+        if len(action_input_split) != 2:
+            raise ValueError("Missing 'Action Input:' part")
+        
+        action = action_input_split[0].strip()
+        
+        # Extract the JSON inside the ```json ... ```
+        action_input_raw = action_input_split[1]
+        
+        # Remove ```json and ``` marks if present
+        json_code_block = json_parser(action_input_raw)
+        
+
+        action_input = json_code_block
+
+        return {
+            "thought": thought,
+            "action": action,
+            "action_input": action_input
+        }
+    
+    except Exception as e:
+        # If any error happens, fallback to putting everything as thought
+        return {
+            "thought": message.strip()
+        }
+
+def get_info_from_step(step_response, prompt_id, suffix):
     url = ''
     image_format = ''
     filename = ''
@@ -105,8 +141,8 @@ def get_info_from_step(step_name, step_response, prompt_id, suffix):
 
     return url, image_format, filename, resource_type
 
-def build_sets_list(step_name, step_response, prompt_id, suffix, user_id, steps):
-    url, image_format, filename, resource_type = get_info_from_step(step_name, step_response, prompt_id, suffix)
+def build_sets_list(step_name, step_response, prompt_id, suffix, user_id, steps, thoughts):
+    url, image_format, filename, resource_type = get_info_from_step(step_response, prompt_id, suffix)
         
     steps.append({
         "step_type": step_name,
@@ -114,7 +150,8 @@ def build_sets_list(step_name, step_response, prompt_id, suffix, user_id, steps)
         "filename":  filename,
         "url": url,
         "resource_type": resource_type,
-        "format": image_format
+        "format": image_format,
+        "reasoning_info": thoughts
     })
     return steps
 
@@ -130,6 +167,7 @@ def format_endpoint_response(response, user_id, prompt_id):
         step_type = STEP_TYPE_MAP.get(step[0].tool)
         if(step_type is None):
             continue
+        thoughts = parse_thoughts(step[0].log)
         step_response = json_parser(step[1])
         suffix = step_type[1]
         step_name = step_type[0]
@@ -139,7 +177,7 @@ def format_endpoint_response(response, user_id, prompt_id):
             step_name = "output"
             suffix = "output"
 
-        steps = build_sets_list(step_name, step_response, prompt_id, suffix, user_id, steps)
+        steps = build_sets_list(step_name, step_response, prompt_id, suffix, user_id, steps, thoughts)
 
 
     if steps:
