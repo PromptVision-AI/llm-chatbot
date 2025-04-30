@@ -110,7 +110,7 @@ def caption_image_tool(input: str) -> str:
     filename = f"temp_image.{ext}"
     
     # Define the API endpoint URL (adjust if your endpoint is hosted elsewhere)
-    api_url = "http://localhost:8000/caption"
+    api_url = "https://d39b-138-25-4-88.ngrok-free.app/caption"
     
     # Prepare files and form data for the POST request
     files = {"file": (filename, image_data, f"image/{ext}")}
