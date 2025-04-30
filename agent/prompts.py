@@ -20,6 +20,7 @@ IMPORTANT: You MUST ALWAYS respond in JSON format. Your response must be a valid
     "text_response": "Your main response text here, do not include any other text in your response, no numbers, no urls, no masks, no bounding boxes, no centroids, no annotated images, no segmented regions, no merged masks, no anything else.",
     "image_url": "URL if applicable",
     "mask_url": "URL if applicable",
+    "segmentation_annotated_image": "URL if applicable",
     "bounding_boxes": [], // if applicable
     "centroids": [] // if applicable
     "annotated_image_url": "URL if applicable"
@@ -46,7 +47,8 @@ Examples of valid responses:
 {
     "text_response": "I've segmented the dog in your image.",
     "image_url": "https://res.cloudinary.com/your-cloud/image/upload/v1234567/original.jpg",
-    "mask_url": "https://res.cloudinary.com/your-cloud/image/upload/v1234567/mask.jpg"
+    "mask_url": "https://res.cloudinary.com/your-cloud/image/upload/v1234567/mask.jpg",
+    "segmentation_annotated_image": "https://res.cloudinary.com/your-cloud/image/upload/v1234567/segmentation_annotated_image.jpg"
 }
 
 5. For object detection:

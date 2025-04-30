@@ -116,7 +116,7 @@ def get_info_from_step(step_response, prompt_id, suffix):
     image_format = ''
     filename = ''
     step_contains_image = False
-    if 'inpainted_image_url' in step_response or 'annotated_image_url' in step_response or 'mask_url' in step_response or 'bw_image_url' in step_response or 'merged_mask_url' in step_response: 
+    if 'inpainted_image_url' in step_response or 'annotated_image_url' in step_response or 'mask_url' in step_response or 'bw_image_url' in step_response or 'merged_mask_url' in step_response or 'segmentation_annotated_image' in step_response: 
         step_contains_image = True
 
 
@@ -124,12 +124,10 @@ def get_info_from_step(step_response, prompt_id, suffix):
         url = None
         if 'annotated_image_url' in step_response:
             url = step_response.get('annotated_image_url')
-        elif 'merged_mask_url' in step_response:
-            url = step_response.get('merged_mask_url')
+        elif 'merged_mask_url' in step_response or 'mask_url' in step_response or 'segmentation_annotated_image' in step_response:
+            url = step_response.get('segmentation_annotated_image')
         elif 'bw_image_url' in step_response:
             url = step_response.get('bw_image_url')
-        elif 'mask_url' in step_response:
-            url = step_response.get('mask_url')
         elif 'inpainted_image_url' in step_response:
             url = step_response.get('inpainted_image_url')
 

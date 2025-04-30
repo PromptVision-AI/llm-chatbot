@@ -5,6 +5,7 @@ from urllib.request import urlopen
 import io
 import requests
 import json
+import os
 
 @tool
 def segment_image_tool(input: str) -> str:
@@ -109,8 +110,8 @@ def caption_image_tool(input: str) -> str:
     ext = image_format.lower()
     filename = f"temp_image.{ext}"
     
-    # Define the API endpoint URL (adjust if your endpoint is hosted elsewhere)
-    api_url = "https://d39b-138-25-4-88.ngrok-free.app/caption"
+    # Define the API endpoint URL from environment variable with fallback
+    api_url = os.environ.get("FLORENCE_API_URL", "")
     
     # Prepare files and form data for the POST request
     files = {"file": (filename, image_data, f"image/{ext}")}
