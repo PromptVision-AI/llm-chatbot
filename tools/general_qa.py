@@ -3,7 +3,7 @@ from utils.utils import json_parser
 import json
 
 @tool
-def general_qa_tool(input: str) -> int:
+def general_qa_tool(input: str) -> str:
     """
     Use this tool for answering general questions that are not related to other tools.
     This tool should be used when the question is about general knowledge, explanations, or discussions
