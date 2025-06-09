@@ -1,3 +1,5 @@
 .env
 *.pt
 model.*
+*.safetensors
+__pycache__/

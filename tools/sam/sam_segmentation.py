@@ -85,13 +85,14 @@ def sam_segment_tool(input: str) -> str:
     
     The input should be a JSON-formatted string with:
       - "image_url": str, the Cloudinary URL of the image to segment.
-      - "bounding_boxes": list, list of bounding boxes in format [x1, y1, x2, y2].
+      - "bounding_boxes": list, list of bounding boxes in format [x1, y1, x2, y2] this must be obtained using detect_objects_tool
       
     Returns:
       str: A JSON-formatted string with segmentation results containing:
           - "success": bool,
           - "original_image_url": str,
           - "merged_mask_url": str, URL of the merged mask image in Cloudinary.
+          - "segmentation_annotated_image": str, URL of the original image with mask overlay in Cloudinary.
     """
     # Parse the input JSON and extract the required fields
     try:
@@ -120,7 +121,7 @@ def sam_segment_tool(input: str) -> str:
         # Initialize SAM model
         model = SAM("tools/sam/sam2.1_l.pt")
         # Run SAM inference with bounding boxes
-        results = model(temp_path, bboxes=bounding_boxes)
+        results = model(temp_path, bboxes=bounding_boxes,verbose=False)
         
         # Extract masks from results
         masks = []
@@ -158,11 +159,48 @@ def sam_segment_tool(input: str) -> str:
         else:
             merged_mask_url = None
         
+        # Create a new annotated image with mask overlay
+        if merged_mask is not None:
+            # Open original image with PIL
+            original_img = Image.open(io.BytesIO(image_data))
+            # Convert to numpy array for processing
+            original_array = np.array(original_img)
+            
+            # Create a colored overlay for the mask (using a semi-transparent blue)
+            overlay = np.zeros_like(original_array, dtype=np.uint8)
+            # Use a distinct color for the mask (blue in this case)
+            overlay[np.squeeze(merged_mask)] = [0, 0, 255]  # BGR format for blue
+            
+            # Create the annotated image with transparency
+            alpha = 0.4  # Transparency level (0.0 to 1.0)
+            annotated_array = cv2.addWeighted(original_array, 1.0, overlay, alpha, 0)
+            annotated_img = Image.fromarray(annotated_array)
+            
+            # Save the annotated image to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as annotated_file:
+                annotated_path = annotated_file.name
+                annotated_img.save(annotated_path, format='PNG')
+                
+                # Upload annotated image to Cloudinary
+                try:
+                    annotated_img_url = upload_image_to_cloudinary(annotated_path)
+                except Exception as e:
+                    raise ValueError(f"Failed to upload annotated image to Cloudinary: {e}")
+                finally:
+                    # Clean up temporary annotated image file
+                    try:
+                        os.unlink(annotated_path)
+                    except:
+                        pass
+        else:
+            annotated_img_url = None
+        
         # Prepare response
         response = {
             "success": True,
             "original_image_url": image_url,
-            "merged_mask_url": merged_mask_url
+            "merged_mask_url": merged_mask_url,
+            "segmentation_annotated_image": annotated_img_url
         }
         
     except Exception as e:

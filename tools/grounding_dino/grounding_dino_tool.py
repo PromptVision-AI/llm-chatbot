@@ -27,6 +27,7 @@ def detect_objects_tool(input: str) -> str:
     The input should be a JSON-formatted string with:
       - "image_url": str, the URL of the image to process.
       - "prompt": str, a text description of the objects to detect (e.g., "people").
+    
       
     Returns:
       str: A JSON-formatted string with detection results containing:
@@ -37,6 +38,9 @@ def detect_objects_tool(input: str) -> str:
           - "centroids": list, list of centroids [cx, cy] for each box,
           - "labels": list, list of labels for each detected object.
           - "annotated_image_url": str, the url of the annotated image.
+
+    Note: The prompt must be very specific (e.g., "black dog"). Based on previous descriptions, and requirement the prompt must be very specific. (e.g., "left-dog").
+    Your prompt must be very specific requirement asked by the user, use previous descriptions to make the prompt very specific. (e.g., "left-black-dog").
     """
     # Parse the input JSON and extract the required fields
     try:
@@ -75,7 +79,7 @@ def detect_objects_tool(input: str) -> str:
         results = processor.post_process_grounded_object_detection(
             outputs,
             inputs.input_ids,
-            box_threshold=0.45,
+            threshold=0.45,
             text_threshold=0.3,
             target_sizes=[image.size[::-1]]
         )
@@ -86,7 +90,7 @@ def detect_objects_tool(input: str) -> str:
         boxes = []
         scores = []
         labels = []
-        for box, score, label in zip(result["boxes"], result["scores"], result["labels"]):
+        for box, score, label in zip(result["boxes"], result["scores"], result["text_labels"]):
             box = [round(x, 2) for x in box.tolist()]
             boxes.append(box)
             scores.append(round(score.item(), 3))

@@ -1,0 +1,43 @@
+{
+  "_class_name": "StableDiffusionXLInpaintPipeline",
+  "_diffusers_version": "0.33.1",
+  "_name_or_path": "diffusers/stable-diffusion-xl-1.0-inpainting-0.1",
+  "feature_extractor": [
+    null,
+    null
+  ],
+  "force_zeros_for_empty_prompt": true,
+  "image_encoder": [
+    null,
+    null
+  ],
+  "requires_aesthetics_score": false,
+  "scheduler": [
+    "diffusers",
+    "DPMSolverMultistepScheduler"
+  ],
+  "text_encoder": [
+    "transformers",
+    "CLIPTextModel"
+  ],
+  "text_encoder_2": [
+    "transformers",
+    "CLIPTextModelWithProjection"
+  ],
+  "tokenizer": [
+    "transformers",
+    "CLIPTokenizer"
+  ],
+  "tokenizer_2": [
+    "transformers",
+    "CLIPTokenizer"
+  ],
+  "unet": [
+    "diffusers",
+    "UNet2DConditionModel"
+  ],
+  "vae": [
+    "diffusers",
+    "AutoencoderKL"
+  ]
+}
